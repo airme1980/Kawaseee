@@ -1,0 +1,27 @@
+name: Deploy static site to Azure Web App
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+env:
+  AZURE_WEBAPP_NAME: Kawasee
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Deploy to Azure Web App
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ env.AZURE_WEBAPP_NAME }}
+          publish-profile: <publishData><publishProfile profileName="Kawasee - Web Deploy" publishMethod="MSDeploy" publishUrl="kawasee-anf0a8erh8fnbudj.scm.canadacentral-01.azurewebsites.net:443" msdeploySite="Kawasee" userName="$Kawasee" userPWD="WM2Hv1kxfdxk8jX6ucYk223JZrzt2AKWBtZdmBnLrR611LYoFYftaDMmGhpn" destinationAppUrl="https://kawasee-anf0a8erh8fnbudj.canadacentral-01.azurewebsites.net" SQLServerDBConnectionString="" mySQLDBConnectionString="" hostingProviderForumLink="" controlPanelLink="https://portal.azure.com" webSystem="WebSites"><databases /></publishProfile><publishProfile profileName="Kawasee - FTP" publishMethod="FTP" publishUrl="ftps://waws-prod-yt1-109.ftp.azurewebsites.windows.net/site/wwwroot" ftpPassiveMode="True" userName="REDACTED" userPWD="REDACTED" destinationAppUrl="https://kawasee-anf0a8erh8fnbudj.canadacentral-01.azurewebsites.net" SQLServerDBConnectionString="REDACTED" mySQLDBConnectionString="" hostingProviderForumLink="" controlPanelLink="https://portal.azure.com" webSystem="WebSites"><databases /></publishProfile><publishProfile profileName="Kawasee - Zip Deploy" publishMethod="ZipDeploy" publishUrl="kawasee-anf0a8erh8fnbudj.scm.canadacentral-01.azurewebsites.net:443" userName="$Kawasee" userPWD="WM2Hv1kxfdxk8jX6ucYk223JZrzt2AKWBtZdmBnLrR611LYoFYftaDMmGhpn" destinationAppUrl="https://kawasee-anf0a8erh8fnbudj.canadacentral-01.azurewebsites.net" SQLServerDBConnectionString="" mySQLDBConnectionString="" hostingProviderForumLink="" controlPanelLink="https://portal.azure.com" webSystem="WebSites"><databases /></publishProfile></publishData>
+          package: ./src
