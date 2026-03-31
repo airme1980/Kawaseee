@@ -12,12 +12,13 @@
 - モバイル優先のレスポンシブ UI
 
 ## 開発・プレビュー
+```bash
+npm install
+npm start
 ```
-# 依存は不要。単純に静的ホスティングしてください。
-cd src
-python3 -m http.server 5173
-```
-ブラウザで `http://localhost:5173` を開くと確認できます。任意の静的サーバー（`npx serve`, `busybox httpd` など）でも構いません。
+ブラウザで `http://localhost:8080` を開くと確認できます。`server.js` は `src/` をそのまま配信する最小 Node サーバーで、Azure App Service Linux/Node 構成に合わせています。
 
 ## デプロイ
-Azure Static Web Apps などの静的ホスティングで `src/` ディレクトリをそのまま公開してください。追加のビルドステップやバックエンドは不要です。
+Azure App Service (Linux, Node) にリポジトリルートをデプロイしてください。`package.json` の `start` スクリプトで `server.js` が起動し、`src/` 配下の静的ファイルを配信します。
+
+GitHub Actions からデプロイする場合は、App Service の publish profile を GitHub Secrets に登録し、`.github/workflows/main_kawaseee.yml` を利用してください。

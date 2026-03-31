@@ -1,0 +1,12 @@
+{
+  "name": "kawaseee",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Minimal currency converter for Azure App Service Linux/Node",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node server.js"
+  }
+}
