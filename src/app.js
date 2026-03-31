@@ -10,10 +10,12 @@ const REFRESH_INTERVAL_MS = 5 * 60 * 1000; // refresh every 5 minutes
 const quickContainer = document.getElementById('quickCurrencies');
 const rateInfoEl = document.getElementById('rateInfo');
 const timestampEl = document.getElementById('timestamp');
+const copyStatusEl = document.getElementById('copyStatus');
 
 let rates = null;
 let lastUpdated = null;
 let refreshTimer = null;
+let copyStatusTimer = null;
 const quickInputs = new Map();
 const quickValueMap = new Map();
 let activeCurrency = 'JPY';
@@ -32,15 +34,31 @@ function renderQuickCurrencies() {
   quickInputs.clear();
 
   CURRENCIES.forEach(({ code, label }) => {
-    const item = document.createElement('label');
+    const item = document.createElement('div');
     item.className = 'quick-item';
     item.dataset.currency = code;
+
+    const controls = document.createElement('div');
+    controls.className = 'quick-input-row';
 
     const input = document.createElement('input');
     input.type = 'number';
     input.inputMode = 'decimal';
-    input.placeholder = '金額を入力';
+    input.placeholder = '0';
     input.dataset.currency = code;
+    input.setAttribute('aria-label', `${label} の金額`);
+
+    const copyButton = document.createElement('button');
+    copyButton.type = 'button';
+    copyButton.className = 'copy-button';
+    copyButton.setAttribute('aria-label', `${label} の値をコピー`);
+    copyButton.title = `${label} の値をコピー`;
+    copyButton.innerHTML = `
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path d="M9 9.75A2.25 2.25 0 0 1 11.25 7.5h7.5A2.25 2.25 0 0 1 21 9.75v7.5a2.25 2.25 0 0 1-2.25 2.25h-7.5A2.25 2.25 0 0 1 9 17.25z"></path>
+        <path d="M5.25 15A2.25 2.25 0 0 1 3 12.75v-7.5A2.25 2.25 0 0 1 5.25 3h7.5A2.25 2.25 0 0 1 15 5.25"></path>
+      </svg>
+    `;
 
     const span = document.createElement('span');
     span.textContent = label;
@@ -50,8 +68,11 @@ function renderQuickCurrencies() {
     quickValueMap.set(code, initialValue);
 
     input.addEventListener('input', () => handleAmountInput(code, input.value));
+    copyButton.addEventListener('click', () => handleCopy(code));
 
-    item.appendChild(input);
+    controls.appendChild(input);
+    controls.appendChild(copyButton);
+    item.appendChild(controls);
     item.appendChild(span);
     quickContainer.appendChild(item);
     quickInputs.set(code, input);
@@ -154,6 +175,30 @@ function handleAmountInput(currency, value) {
   setActiveCurrency(currency, value);
 }
 
+async function handleCopy(currency) {
+  if (!navigator.clipboard?.writeText) {
+    showCopyStatus('このブラウザではコピー機能を利用できません。', true);
+    return;
+  }
+
+  try {
+    const input = quickInputs.get(currency);
+    const value = input?.value.trim() ?? '';
+
+    if (!value) {
+      showCopyStatus('コピーする値がありません。', true);
+      return;
+    }
+
+    await navigator.clipboard.writeText(value);
+    input?.focus();
+    showCopyStatus(`${currency} の ${value} をコピーしました。`);
+  } catch (error) {
+    console.error(error);
+    showCopyStatus('コピーに失敗しました。ブラウザの権限をご確認ください。', true);
+  }
+}
+
 function syncQuickIndicator() {
   quickInputs.forEach((input, currency) => {
     const parent = input.closest('.quick-item');
@@ -177,6 +222,19 @@ function formatInputValue(amount) {
   const fixed = amount.toFixed(4);
   const trimmed = fixed.replace(/(\.\d*?[1-9])0+$/, '$1').replace(/\.0+$/, '');
   return trimmed;
+}
+
+function showCopyStatus(message, isError = false) {
+  if (!copyStatusEl) return;
+
+  clearTimeout(copyStatusTimer);
+  copyStatusEl.textContent = message;
+  copyStatusEl.classList.toggle('is-error', isError);
+
+  copyStatusTimer = setTimeout(() => {
+    copyStatusEl.textContent = '';
+    copyStatusEl.classList.remove('is-error');
+  }, 3000);
 }
 
 init();
