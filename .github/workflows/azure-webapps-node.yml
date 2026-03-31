@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 env:
-  AZURE_WEBAPP_NAME: Kawasee
+  AZURE_WEBAPP_NAME: Kawaseee
 
 permissions:
   contents: read
