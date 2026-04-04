@@ -5,7 +5,37 @@ const CURRENCIES = [
   { code: 'EUR', label: 'EUR · Euro' }
 ];
 
-const API_URL = 'https://api.frankfurter.app/latest?from=USD&to=JPY,CNY,EUR';
+const API_SOURCES = [
+  {
+    name: 'Frankfurter',
+    url: 'https://api.frankfurter.app/latest?from=USD&to=JPY,CNY,EUR',
+    normalize: (data) => {
+      if (!data?.rates) {
+        throw new Error('Frankfurter rates missing');
+      }
+
+      return {
+        rates: normalizeRates(data.rates, { usdRate: 1 }),
+        timestamp: data.date ? new Date(`${data.date}T00:00:00Z`) : new Date()
+      };
+    }
+  },
+  {
+    name: 'Open ER API',
+    url: 'https://open.er-api.com/v6/latest/USD',
+    normalize: (data) => {
+      if (data?.result !== 'success' || !data?.rates) {
+        throw new Error('Open ER API returned invalid payload');
+      }
+
+      const timestamp = data.time_last_update_utc ? new Date(data.time_last_update_utc) : new Date();
+      return {
+        rates: normalizeRates(data.rates, { usdRate: data.rates.USD ?? 1 }),
+        timestamp: Number.isNaN(timestamp?.getTime()) ? new Date() : timestamp
+      };
+    }
+  }
+];
 const REFRESH_INTERVAL_MS = 5 * 60 * 1000; // refresh every 5 minutes
 const quickContainer = document.getElementById('quickCurrencies');
 const rateInfoEl = document.getElementById('rateInfo');
@@ -79,31 +109,63 @@ function renderQuickCurrencies() {
   });
 }
 
+async function fetchFromSource(source) {
+  const response = await fetch(source.url);
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status}`);
+  }
+  const data = await response.json();
+  const normalized = source.normalize(data);
+  if (!normalized?.rates) {
+    throw new Error('Normalizer returned empty rates');
+  }
+  return normalized;
+}
+
+function normalizeRates(sourceRates, { usdRate = 1 } = {}) {
+  const normalized = {};
+  CURRENCIES.forEach(({ code }) => {
+    if (code === 'USD') {
+      normalized.USD = typeof usdRate === 'number' && !Number.isNaN(usdRate) ? usdRate : 1;
+      return;
+    }
+
+    const value = sourceRates?.[code];
+    if (typeof value !== 'number') {
+      throw new Error(`Missing rate for ${code}`);
+    }
+
+    normalized[code] = value;
+  });
+  return normalized;
+}
+
 async function fetchRates() {
   clearTimeout(refreshTimer);
   rateInfoEl.textContent = 'レートを更新しています…';
 
-  try {
-    const response = await fetch(API_URL);
-    if (!response.ok) {
-      throw new Error('Failed to fetch rates');
+  let fetched = null;
+  for (const source of API_SOURCES) {
+    try {
+      fetched = await fetchFromSource(source);
+      break;
+    } catch (error) {
+      console.error(`Rate fetch failed via ${source.name}`, error);
     }
-    const data = await response.json();
-    if (!data || !data.rates) {
-      throw new Error('Rates missing in response');
-    }
-    rates = { USD: 1, ...data.rates };
-    lastUpdated = data.date ? new Date(`${data.date}T00:00:00Z`) : new Date();
+  }
+
+  if (fetched) {
+    rates = fetched.rates;
+    lastUpdated = fetched.timestamp;
     rateInfoEl.textContent = '最新の参考レートを表示中';
     updateTimestamp();
     updateResult();
-  } catch (error) {
-    console.error(error);
+  } else {
     rateInfoEl.textContent = 'レート取得に失敗しました。通信状況をご確認ください。';
     timestampEl.textContent = 'レートの更新に失敗しました';
-  } finally {
-    refreshTimer = setTimeout(fetchRates, REFRESH_INTERVAL_MS);
   }
+
+  refreshTimer = setTimeout(fetchRates, REFRESH_INTERVAL_MS);
 }
 
 function updateTimestamp() {
