@@ -68,9 +68,6 @@ function renderQuickCurrencies() {
     item.className = 'quick-item';
     item.dataset.currency = code;
 
-    const controls = document.createElement('div');
-    controls.className = 'quick-input-row';
-
     const input = document.createElement('input');
     input.type = 'number';
     input.inputMode = 'decimal';
@@ -93,6 +90,11 @@ function renderQuickCurrencies() {
     const span = document.createElement('span');
     span.textContent = label;
 
+    const controls = document.createElement('div');
+    controls.className = 'quick-input-row';
+    controls.appendChild(input);
+    controls.appendChild(copyButton);
+
     const initialValue = '';
     input.value = initialValue;
     quickValueMap.set(code, initialValue);
@@ -100,17 +102,21 @@ function renderQuickCurrencies() {
     input.addEventListener('input', () => handleAmountInput(code, input.value));
     copyButton.addEventListener('click', () => handleCopy(code));
 
-    controls.appendChild(input);
-    controls.appendChild(copyButton);
-    item.appendChild(controls);
     item.appendChild(span);
+    item.appendChild(controls);
     quickContainer.appendChild(item);
     quickInputs.set(code, input);
   });
 }
 
 async function fetchFromSource(source) {
-  const response = await fetch(source.url);
+  const url = new URL(source.url);
+  // Add timestamp param + disable caching so every request hits the live API.
+  url.searchParams.set('_', Date.now().toString());
+
+  const response = await fetch(url.toString(), {
+    cache: 'no-store'
+  });
   if (!response.ok) {
     throw new Error(`HTTP ${response.status}`);
   }
@@ -140,23 +146,52 @@ function normalizeRates(sourceRates, { usdRate = 1 } = {}) {
   return normalized;
 }
 
+function promiseAnyPolyfill(promises) {
+  return new Promise((resolve, reject) => {
+    const errors = [];
+    let rejectedCount = 0;
+
+    promises.forEach((promise, index) => {
+      Promise.resolve(promise)
+        .then(resolve)
+        .catch((error) => {
+          errors[index] = error;
+          rejectedCount += 1;
+          if (rejectedCount === promises.length) {
+            reject(new AggregateError(errors, 'All promises were rejected'));
+          }
+        });
+    });
+  });
+}
+
 async function fetchRates() {
   clearTimeout(refreshTimer);
   rateInfoEl.textContent = 'レートを更新しています…';
 
+  const fetchJobs = API_SOURCES.map((source) =>
+    fetchFromSource(source)
+      .then((data) => ({ data, source: source.name }))
+      .catch((error) => {
+        console.error(`Rate fetch failed via ${source.name}`, error);
+        throw error;
+      })
+  );
+
   let fetched = null;
-  for (const source of API_SOURCES) {
-    try {
-      fetched = await fetchFromSource(source);
-      break;
-    } catch (error) {
-      console.error(`Rate fetch failed via ${source.name}`, error);
+  try {
+    if (typeof Promise.any === 'function') {
+      fetched = await Promise.any(fetchJobs);
+    } else {
+      fetched = await promiseAnyPolyfill(fetchJobs);
     }
+  } catch (error) {
+    console.error('All rate sources failed', error);
   }
 
-  if (fetched) {
-    rates = fetched.rates;
-    lastUpdated = fetched.timestamp;
+  if (fetched?.data) {
+    rates = fetched.data.rates;
+    lastUpdated = fetched.data.timestamp;
     rateInfoEl.textContent = '最新の参考レートを表示中';
     updateTimestamp();
     updateResult();
@@ -281,7 +316,7 @@ function setActiveCurrency(currency, value) {
 }
 
 function formatInputValue(amount) {
-  const fixed = amount.toFixed(4);
+  const fixed = amount.toFixed(2);
   const trimmed = fixed.replace(/(\.\d*?[1-9])0+$/, '$1').replace(/\.0+$/, '');
   return trimmed;
 }

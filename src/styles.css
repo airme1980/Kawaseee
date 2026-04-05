@@ -74,11 +74,14 @@ body {
   border-radius: 0.9rem;
   background: #fff;
   box-shadow: inset 0 0 0 1px #e2e8f0;
+  justify-content: flex-end;
 }
 
 .quick-item span {
   font-weight: 600;
   color: #475569;
+  flex: 1;
+  text-align: right;
 }
 
 .quick-input-row {
