@@ -22,3 +22,6 @@ npm start
 Azure App Service (Linux, Node) にリポジトリルートをデプロイしてください。`package.json` の `start` スクリプトで `server.js` が起動し、`src/` 配下の静的ファイルを配信します。
 
 GitHub Actions からデプロイする場合は、App Service の publish profile を GitHub Secrets に登録し、`.github/workflows/main_kawaseee.yml` を利用してください。
+
+## 検索エンジン向けファイル
+`src/robots.txt` と `src/sitemap.xml` を追加済みです。現在の `sitemap.xml` は `https://kawasee.com/` を本番 URL として記載しています。公開ドメインを変更する場合は、この URL をあわせて更新してください。
