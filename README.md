@@ -24,4 +24,4 @@ Azure App Service (Linux, Node) にリポジトリルートをデプロイして
 GitHub Actions からデプロイする場合は、App Service の publish profile を GitHub Secrets に登録し、`.github/workflows/main_kawaseee.yml` を利用してください。
 
 ## 検索エンジン向けファイル
-`src/robots.txt` と `src/sitemap.xml` を追加済みです。現在の `sitemap.xml` は `https://kawasee.com/` を本番 URL として記載しています。公開ドメインを変更する場合は、この URL をあわせて更新してください。
+`src/robots.txt` と `src/sitemap.xml` を追加済みです。あわせて、ルート配信環境向けに `robots.txt` / `sitemap.xml` / `BingSiteAuth.xml` もリポジトリ直下へ配置しています。現在の `sitemap.xml` は `https://kawasee.com/` を本番 URL として記載しています。公開ドメインを変更する場合は、この URL をあわせて更新してください。

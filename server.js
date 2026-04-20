@@ -5,6 +5,7 @@ const path = require('path');
 const host = '0.0.0.0';
 const port = Number(process.env.PORT) || 8080;
 const staticRoot = path.join(__dirname, 'src');
+const rootFallbackFiles = new Set(['/sitemap.xml', '/robots.txt', '/BingSiteAuth.xml']);
 
 const mimeTypes = {
   '.css': 'text/css; charset=utf-8',
@@ -26,33 +27,69 @@ function resolveRequestPath(urlPath) {
   return path.join(staticRoot, safePath);
 }
 
-function sendFile(filePath, response, method) {
-  fs.readFile(filePath, (error, content) => {
-    if (error) {
-      if (error.code === 'ENOENT') {
-        response.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
-        response.end('Not Found');
-        return;
-      }
+function resolveRootFallbackPath(urlPath) {
+  if (!rootFallbackFiles.has(urlPath)) {
+    return null;
+  }
 
-      response.writeHead(500, { 'Content-Type': 'text/plain; charset=utf-8' });
-      response.end('Internal Server Error');
-      return;
-    }
+  const safePath = path.normalize(decodeURIComponent(urlPath)).replace(/^(\.\.[\\/])+/, '');
+  return path.join(__dirname, safePath);
+}
 
-    const extension = path.extname(filePath).toLowerCase();
-    response.writeHead(200, {
-      'Content-Type': mimeTypes[extension] || 'application/octet-stream',
-      'Cache-Control': extension === '.html' ? 'no-cache' : 'public, max-age=300'
-    });
-
-    if (method === 'HEAD') {
-      response.end();
-      return;
-    }
-
-    response.end(content);
+function sendResponse(filePath, content, response, method) {
+  const extension = path.extname(filePath).toLowerCase();
+  response.writeHead(200, {
+    'Content-Type': mimeTypes[extension] || 'application/octet-stream',
+    'Cache-Control': extension === '.html' ? 'no-cache' : 'public, max-age=300'
   });
+
+  if (method === 'HEAD') {
+    response.end();
+    return;
+  }
+
+  response.end(content);
+}
+
+function sendFileWithFallback(filePath, fallbackPath, response, method) {
+  fs.readFile(filePath, (error, content) => {
+    if (!error) {
+      sendResponse(filePath, content, response, method);
+      return;
+    }
+
+    if (error.code === 'ENOENT' && fallbackPath) {
+      fs.readFile(fallbackPath, (fallbackError, fallbackContent) => {
+        if (fallbackError) {
+          if (fallbackError.code === 'ENOENT') {
+            response.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
+            response.end('Not Found');
+            return;
+          }
+
+          response.writeHead(500, { 'Content-Type': 'text/plain; charset=utf-8' });
+          response.end('Internal Server Error');
+          return;
+        }
+
+        sendResponse(fallbackPath, fallbackContent, response, method);
+      });
+      return;
+    }
+
+    if (error.code === 'ENOENT') {
+      response.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
+      response.end('Not Found');
+      return;
+    }
+
+    response.writeHead(500, { 'Content-Type': 'text/plain; charset=utf-8' });
+    response.end('Internal Server Error');
+  });
+}
+
+function sendFile(filePath, response, method) {
+  sendFileWithFallback(filePath, null, response, method);
 }
 
 const server = http.createServer((request, response) => {
@@ -65,6 +102,8 @@ const server = http.createServer((request, response) => {
   const requestPath = new URL(request.url, `http://${request.headers.host || 'localhost'}`).pathname;
   const filePath = resolveRequestPath(requestPath);
   const normalizedPath = path.normalize(filePath);
+  const fallbackPath = resolveRootFallbackPath(requestPath);
+  const normalizedFallbackPath = fallbackPath ? path.normalize(fallbackPath) : null;
 
   if (!normalizedPath.startsWith(staticRoot)) {
     response.writeHead(403, { 'Content-Type': 'text/plain; charset=utf-8' });
@@ -72,7 +111,13 @@ const server = http.createServer((request, response) => {
     return;
   }
 
-  sendFile(normalizedPath, response, request.method);
+  if (normalizedFallbackPath && !normalizedFallbackPath.startsWith(__dirname)) {
+    response.writeHead(403, { 'Content-Type': 'text/plain; charset=utf-8' });
+    response.end('Forbidden');
+    return;
+  }
+
+  sendFileWithFallback(normalizedPath, normalizedFallbackPath, response, request.method);
 });
 
 server.listen(port, host, () => {
