@@ -121,5 +121,5 @@ const server = http.createServer((request, response) => {
 });
 
 server.listen(port, host, () => {
-  console.log(`Kawaseee listening on http://localhost:${port} (bound to ${host}:${port})`);
+  console.log(`Kawaseee listening on http://${host}:${port}`);
 });
