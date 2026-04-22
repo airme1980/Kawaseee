@@ -191,6 +191,10 @@ body {
 }
 
 @media (max-width: 640px) {
+  .hero h1 {
+    font-size: 2rem;
+  }
+
   .quick-list {
     grid-template-columns: 1fr;
   }
