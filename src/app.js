@@ -1,8 +1,8 @@
 const CURRENCIES = [
   { code: 'JPY', label: 'JPY · 日本円' },
   { code: 'CNY', label: 'CNY · 人民元' },
-  { code: 'USD', label: 'USD · US Dollar' },
-  { code: 'EUR', label: 'EUR · Euro' }
+  { code: 'USD', label: 'USD · ドル' },
+  { code: 'EUR', label: 'EUR · ユーロ' }
 ];
 
 const API_SOURCES = [
