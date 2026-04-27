@@ -31,7 +31,7 @@ jobs:
 
       - name: Write deployment version file
         run: |
-          echo '{"version": "${GITHUB_SHA}"}' > src/version.json
+          echo "{\"version\": \"${GITHUB_SHA}\"}" > src/version.json
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
