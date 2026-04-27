@@ -29,11 +29,14 @@ jobs:
           npm run build --if-present
           npm run test --if-present
 
+      - name: Write deployment version file
+        run: |
+          echo "{\"version\": \"${GITHUB_SHA}\"}" > src/version.json
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
           name: node-app
-          path: ./src
+          path: .
 
   deploy:
     runs-on: ubuntu-latest
