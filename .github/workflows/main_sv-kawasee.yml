@@ -31,12 +31,16 @@ jobs:
 
       - name: Write deployment version file
         run: |
-          echo "{\"version\": \"${GITHUB_SHA}\"}" > src/version.json
+          if [ -d src ]; then
+            printf '{"version": "%s"}\n' "${GITHUB_SHA}" > src/version.json
+          else
+            printf '{"version": "%s"}\n' "${GITHUB_SHA}" > version.json
+          fi
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
           name: node-app
-          path: ./src
+          path: .
 
   deploy:
     runs-on: ubuntu-latest
