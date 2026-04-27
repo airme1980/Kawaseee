@@ -21,7 +21,7 @@ jobs:
 
       - name: Write deployment version file
         run: |
-          echo "{\"version\": \"${GITHUB_SHA}\"}" > version.json
+          echo "{\"version\": \"${GITHUB_SHA}\"}" > src/version.json
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
