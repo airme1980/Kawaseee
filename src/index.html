@@ -17,7 +17,6 @@
 
     <main class="converter" aria-live="polite">
       <section class="quick-panel">
-        <p class="section-label">よく使う通貨</p>
         <div id="quickCurrencies" class="quick-list"></div>
         <p class="quick-hint">任意の通貨欄に金額を入力すると、他の通貨に自動で反映されます。右側のボタンで値をコピーできます。</p>
         <p id="copyStatus" class="copy-status" aria-live="polite"></p>
@@ -34,25 +33,14 @@
         const fallbackVersion = Date.now().toString();
         const script = document.createElement('script');
 
-        const buildInfoEl = document.getElementById('buildInfo');
-
         fetch(`version.json?_=${Date.now()}`, { cache: 'no-store' })
           .then((response) => (response.ok ? response.json() : null))
           .then((payload) => {
-            const rawVersion = payload?.version || fallbackVersion;
-            const version = encodeURIComponent(rawVersion);
-            if (buildInfoEl) {
-              buildInfoEl.textContent = `Build: ${rawVersion}`;
-            }
-            window.__APP_VERSION__ = rawVersion;
+            const version = encodeURIComponent(payload?.version || fallbackVersion);
             script.src = `app.js?v=${version}`;
             document.body.appendChild(script);
           })
           .catch(() => {
-            if (buildInfoEl) {
-              buildInfoEl.textContent = `Build: ${fallbackVersion}`;
-            }
-            window.__APP_VERSION__ = fallbackVersion;
             script.src = `app.js?v=${fallbackVersion}`;
             document.body.appendChild(script);
           });
