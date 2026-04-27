@@ -4,7 +4,7 @@ const path = require('path');
 
 const host = '0.0.0.0';
 const port = Number(process.env.PORT) || 8080;
-const staticRoot = path.join(__dirname, 'src');
+const staticRoot = __dirname;
 const rootFallbackFiles = new Set(['/sitemap.xml', '/robots.txt', '/BingSiteAuth.xml']);
 
 const mimeTypes = {
@@ -126,4 +126,5 @@ const server = http.createServer((request, response) => {
 
 server.listen(port, host, () => {
   console.log(`Kawaseee listening on http://localhost:${port} (bound to ${host}:${port})`);
+  console.log(`Serving static files from: ${staticRoot}`);
 });

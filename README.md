@@ -16,12 +16,12 @@
 npm install
 npm start
 ```
-ブラウザで `http://localhost:8080` を開くと確認できます。`server.js` は `src/` をそのまま配信する最小 Node サーバーで、Azure App Service Linux/Node 構成に合わせています。
+ブラウザで `http://localhost:8080` を開くと確認できます。`server.js` はリポジトリ直下の静的ファイルを配信する最小 Node サーバーで、Azure App Service Linux/Node 構成に合わせています。
 
 ## デプロイ
-Azure App Service (Linux, Node) にリポジトリルートをデプロイしてください。`package.json` の `start` スクリプトで `server.js` が起動し、`src/` 配下の静的ファイルを配信します。
+Azure App Service (Linux, Node) にリポジトリルートをデプロイしてください。`package.json` の `start` スクリプトで `server.js` が起動し、リポジトリ直下の静的ファイルを配信します。
 
 GitHub Actions からデプロイする場合は、App Service の publish profile を GitHub Secrets に登録し、`.github/workflows/main_kawaseee.yml` を利用してください。
 
 ## 検索エンジン向けファイル
-`src/robots.txt` と `src/sitemap.xml` を追加済みです。あわせて、ルート配信環境向けに `robots.txt` / `sitemap.xml` / `BingSiteAuth.xml` もリポジトリ直下へ配置しています。現在の `sitemap.xml` は `https://kawasee.com/` を本番 URL として記載しています。公開ドメインを変更する場合は、この URL をあわせて更新してください。
+`robots.txt` / `sitemap.xml` / `BingSiteAuth.xml` はリポジトリ直下に配置しています。現在の `sitemap.xml` は `https://kawasee.com/` を本番 URL として記載しています。公開ドメインを変更する場合は、この URL をあわせて更新してください。
