@@ -25,6 +25,23 @@
       <p class="disclaimer">※ 表示レートは参考値です。実際の取引レートとは異なる場合があります。</p>
     </main>
 
-    <script src="app.js"></script>
+    <script>
+      (function loadAppScript() {
+        const fallbackVersion = Date.now().toString();
+        const script = document.createElement('script');
+
+        fetch(`version.json?_=${Date.now()}`, { cache: 'no-store' })
+          .then((response) => (response.ok ? response.json() : null))
+          .then((payload) => {
+            const version = encodeURIComponent(payload?.version || fallbackVersion);
+            script.src = `app.js?v=${version}`;
+            document.body.appendChild(script);
+          })
+          .catch(() => {
+            script.src = `app.js?v=${fallbackVersion}`;
+            document.body.appendChild(script);
+          });
+      })();
+    </script>
   </body>
 </html>

@@ -19,6 +19,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Write deployment version file
+        run: |
+          echo "{\"version\": \"${GITHUB_SHA}\"}" > src/version.json
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
