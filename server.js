@@ -4,7 +4,7 @@ const path = require('path');
 
 const host = '0.0.0.0';
 const port = Number(process.env.PORT) || 8080;
-const staticRoot = path.join(__dirname, 'src');
+const staticRoot = __dirname;
 const rootFallbackFiles = new Set(['/sitemap.xml', '/robots.txt', '/BingSiteAuth.xml']);
 
 const mimeTypes = {
@@ -38,9 +38,13 @@ function resolveRootFallbackPath(urlPath) {
 
 function sendResponse(filePath, content, response, method) {
   const extension = path.extname(filePath).toLowerCase();
+  const cacheControl = ['.html', '.js', '.css', '.json'].includes(extension)
+    ? 'no-cache, no-store, must-revalidate'
+    : 'public, max-age=300';
+
   response.writeHead(200, {
     'Content-Type': mimeTypes[extension] || 'application/octet-stream',
-    'Cache-Control': extension === '.html' ? 'no-cache' : 'public, max-age=300'
+    'Cache-Control': cacheControl
   });
 
   if (method === 'HEAD') {
@@ -122,4 +126,5 @@ const server = http.createServer((request, response) => {
 
 server.listen(port, host, () => {
   console.log(`Kawaseee listening on http://localhost:${port} (bound to ${host}:${port})`);
+  console.log(`Serving static files from: ${staticRoot}`);
 });
